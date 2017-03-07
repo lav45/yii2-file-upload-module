@@ -1,5 +1,5 @@
 {
-    "name": "lav45/yii2-fileUpload-module",
+    "name": "lav45/yii2-file-upload-module",
     "description": "This is Yii2 extension for the upload files",
     "keywords": [
         "yii2",
@@ -8,7 +8,7 @@
         "widget",
         "upload"
     ],
-    "homepage": "https://github.com/LAV45/yii2-fileUpload-module",
+    "homepage": "https://github.com/LAV45/yii2-file-upload-module",
     "type": "yii2-extension",
     "license": "BSD-3-Clause",
     "authors": [
