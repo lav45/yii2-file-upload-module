@@ -1,0 +1,40 @@
+{
+    "name": "lav45/yii2-fileUpload-module",
+    "description": "This is Yii2 extension for the upload files",
+    "keywords": [
+        "yii2",
+        "extension",
+        "behavior",
+        "widget",
+        "upload"
+    ],
+    "homepage": "https://github.com/LAV45/yii2-fileUpload-module",
+    "type": "yii2-extension",
+    "license": "BSD-3-Clause",
+    "authors": [
+        {
+            "name": "Alexey Loban",
+            "email": "lav451@gmail.com"
+        }
+    ],
+    "repositories": [
+        {
+            "type": "composer",
+            "url": "https://asset-packagist.org"
+        }
+    ],
+    "require": {
+        "yiisoft/yii2": "2.0.*",
+        "bower-asset/blueimp-file-upload": "9.*"
+    },
+    "autoload": {
+        "psr-4": {
+            "lav45\\fileUpload\\": "src"
+        }
+    },
+    "extra": {
+        "branch-alias": {
+            "dev-master": "0.1.x-dev"
+        }
+    }
+}
