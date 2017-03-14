@@ -26,8 +26,8 @@ use yii\web\UploadedFile;
  *     return [
  *         'upload-image' => [
  *             'class' => 'frontend\components\actions\UploadAction',
- *             'url' => '/statics',
- *             'path' => '@webroot/statics',
+ *             'url' => '@web/assets/upload',
+ *             'path' => '@webroot/assets/upload',
  *             'validatorOptions' => [
  *                 'maxWidth' => 1000,
  *                 'maxHeight' => 1000
@@ -63,21 +63,31 @@ class UploadAction extends Action
     /**
      * @var string Path to directory where files will be uploaded
      */
-    private $path;
+    public $path;
     /**
      * @var string URL path to directory where files will be uploaded
      */
-    private $url;
+    public $url = '@web/assets/upload';
     /**
      * @var string Model validator name
      */
     private $validator = 'image';
 
-    public function getPath()
+    /**
+     * Initializes the object.
+     */
+    public function init()
     {
-        return $this->path;
+        parent::init();
+
+        $this->setPath($this->path);
+        $this->setUrl($this->url);
     }
 
+    /**
+     * @param string $path
+     * @throws InvalidConfigException
+     */
     public function setPath($path)
     {
         if (empty($path)) {
@@ -94,16 +104,23 @@ class UploadAction extends Action
         $this->path = $path;
     }
 
-    public function setUrl($str)
+    /**
+     * @param string $url
+     * @throws InvalidConfigException
+     */
+    public function setUrl($url)
     {
-        if (empty($str)) {
+        if (empty($url)) {
             throw new InvalidConfigException('The "url" attribute must be set.');
         }
 
-        $str = Yii::getAlias($str);
-        $this->url = rtrim($str, '/');
+        $url = Yii::getAlias($url);
+        $this->url = rtrim($url, '/');
     }
 
+    /**
+     * @param boolean $flag
+     */
     public function setUploadOnlyImage($flag)
     {
         $this->validator = $flag === true ? 'image' : 'file';
@@ -136,17 +153,16 @@ class UploadAction extends Action
                 $file->name = uniqid() . $fileExtension;
             } while (file_exists($this->path . '/' . $file->name));
 
-            $result = [];
-            $result['name'] = $file->name;
-            $result['type'] = $file->type;
-            $result['size'] = $file->size;
-            $result['url'] = $this->url . '/' . $file->name;
+            $result = [
+                'name' => $file->name,
+                'type' => $file->type,
+                'size' => $file->size,
+                'url' => $this->url . '/' . $file->name,
+            ];
 
             if ($file->saveAs($this->path . '/' . $file->name) === false) {
                 $result = ['error' => 'Failed to load file'];
                 @unlink($file->tempName);
-            } else {
-                $result = ['files' => [$result]];
             }
         }
 

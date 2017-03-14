@@ -93,10 +93,10 @@ class UploadBehavior extends Behavior
      */
     public function beforeUpdate()
     {
-        if ($this->saveFile($this->getAttribute())) {
-            if ($this->unlinkOldFile === true) {
-                $this->deleteFile($this->getOldAttribute());
-            }
+        $this->saveFile($this->getAttribute());
+
+        if ($this->unlinkOldFile === true) {
+            $this->deleteFile($this->getOldAttribute());
         }
     }
 
@@ -111,17 +111,29 @@ class UploadBehavior extends Behavior
     }
 
     /**
-     * @param string $file name
+     * @param string|string[] $file name
      * @return bool
      */
     protected function saveFile($file)
     {
-        $tempFile = $this->tempDir . '/' . $file;
-        $uploadFile = $this->uploadDir . '/' . $file;
-        if (!is_file($tempFile)) {
+        if (is_array($file)) {
+            foreach ($file as $item) {
+                $this->saveFile($item);
+            }
+            return true;
+        }
+        if (empty($file)) {
             return false;
         }
-        return rename($tempFile, $uploadFile);
+
+        $tempFile = $this->tempDir . '/' . $file;
+        $uploadFile = $this->uploadDir . '/' . $file;
+
+        if (is_file($tempFile)) {
+            return rename($tempFile, $uploadFile);
+        }
+
+        return false;
     }
 
     /**
@@ -132,7 +144,18 @@ class UploadBehavior extends Behavior
      */
     protected function deleteFile($file)
     {
+        if (is_array($file)) {
+            foreach ($file as $item) {
+                $this->deleteFile($item);
+            }
+            return true;
+        }
+        if (empty($file)) {
+            return false;
+        }
+
         $file = $this->uploadDir . '/' . $file;
+
         return is_file($file) ? unlink($file) : false;
     }
 
@@ -141,7 +164,7 @@ class UploadBehavior extends Behavior
      */
     protected function getAttribute()
     {
-        return $this->owner->getAttribute($this->attribute);
+        return $this->owner[$this->attribute];
     }
 
     /**

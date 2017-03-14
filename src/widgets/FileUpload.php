@@ -2,9 +2,9 @@
 
 namespace lav45\fileUpload\widgets;
 
-use yii\helpers\Html;
-use yii\helpers\Json;
+use yii\base\Model;
 use yii\helpers\Url;
+use yii\helpers\Json;
 use yii\widgets\InputWidget;
 
 /**
@@ -17,6 +17,14 @@ class FileUpload extends InputWidget
      * @var string|array upload route
      */
     public $url;
+    /**
+     * @var \yii\base\Model|\lav45\fileUpload\traits\UploadTrait
+     */
+    public $model;
+    /**
+     * @var string
+     */
+    public $template = 'input-group';
     /**
      * @var array the plugin options. For more information see the jQuery File Upload options documentation.
      * @see https://github.com/blueimp/jQuery-File-Upload/wiki/Options
@@ -34,26 +42,21 @@ class FileUpload extends InputWidget
         parent::init();
 
         $this->clientOptions['url'] = Url::to($this->url);
-        $this->options['data-url'] = $this->clientOptions['url'];
-        $this->options['id'] .= '-uploader';
     }
 
     public function run()
     {
-        $this->registerAssets();
+        $input = $this->renderInput();
+
         $this->registerClientScript();
-        return $this->renderInput();
+        $this->registerAssets();
+
+        return $input;
     }
     
     protected function renderInput()
     {
-        $input = $this->hasModel() ?
-            Html::activeHiddenInput($this->model, $this->attribute) :
-            Html::hiddenInput($this->name, $this->value, ['id' => $this->getId()]);
-
-        $input .= Html::fileInput('file', null, $this->options);
-
-        return $input;
+        return $this->render($this->template);
     }
 
     protected function registerAssets()
@@ -66,12 +69,6 @@ class FileUpload extends InputWidget
         $options = Json::encode($this->clientOptions);
         $id = $this->options['id'];
 
-        $targetId = $this->hasModel() ? Html::getInputId($this->model, $this->attribute) : $this->getId();
-
-        $js[] = "jQuery('#{$id}').on('fileuploaddone', function(e, data) {
-            jQuery('#{$targetId}').val(data.result.files[0].name);
-        });";
-
         $js[] = "jQuery('#{$id}').fileupload({$options});";
 
         foreach ($this->clientEvents as $event => $handler) {
@@ -79,5 +76,18 @@ class FileUpload extends InputWidget
         }
 
         $this->getView()->registerJs(implode("\n", $js));
+    }
+
+    public function hasModel()
+    {
+        $result = parent::hasModel();
+
+        if ($result === false && $this->model instanceof Model) {
+            preg_match('~\w+\[(\w+)\](.+)~i', $this->name, $matches);
+            $this->attribute = $matches[1] . $matches[2];
+            $result = true;
+        }
+
+        return $result;
     }
 }

@@ -3,7 +3,12 @@
 namespace lav45\fileUpload\traits;
 
 use Yii;
+use yii\helpers\Html;
 
+/**
+ * Class UploadTrait
+ * @package lav45\fileUpload\traits
+ */
 trait UploadTrait
 {
     /**
@@ -15,12 +20,13 @@ trait UploadTrait
     }
 
     /**
-     * @param string $attribute
+     * @param string $attribute image, image[0]
      * @return string
      */
     public function getAttributeUrl($attribute)
     {
-        return $this->getUploadUrl() . '/' . $this->{$attribute};
+        /** @var $this \yii\base\Model */
+        return $this->getUploadUrl() . '/' . Html::getAttributeValue($this, $attribute);
     }
 
     /**
@@ -36,7 +42,7 @@ trait UploadTrait
      */
     public static function getTempDir()
     {
-        return Yii::getAlias('@runtime/upload');
+        return Yii::getAlias('@webroot/assets/upload');
     }
 
     /**
