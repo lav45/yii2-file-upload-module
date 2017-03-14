@@ -31,11 +31,9 @@ class FileUpload extends InputWidget
      */
     public $clientOptions = [];
     /**
-     * @var array the event handlers for the jQuery File Upload plugin.
-     * Please refer to the jQuery File Upload plugin web page for possible options.
-     * @see https://github.com/blueimp/jQuery-File-Upload/wiki/Options#callback-options
+     * @var string
      */
-    public $clientEvents = [];
+    private $js;
 
     public function init()
     {
@@ -64,18 +62,31 @@ class FileUpload extends InputWidget
         assets\FileUploadAsset::register($this->getView());
     }
 
+    public function setClientEvents(array $data)
+    {
+        foreach ($data as $event => $handler) {
+            $this->addClientEvents($event, $handler);
+        }
+    }
+
+    /**
+     * @param string $event
+     * @param string $handler
+     * @see https://github.com/blueimp/jQuery-File-Upload/wiki/Options#callback-options
+     */
+    public function addClientEvents($event, $handler)
+    {
+        $this->js .= "jQuery('#{id}').on('{$event}', {$handler});\n";
+    }
+
     protected function registerClientScript()
     {
         $options = Json::encode($this->clientOptions);
-        $id = $this->options['id'];
 
-        $js[] = "jQuery('#{$id}').fileupload({$options});";
+        $this->js .= "jQuery('#{id}').fileupload({$options});\n";
+        $this->js = str_replace('{id}', $this->options['id'], $this->js);
 
-        foreach ($this->clientEvents as $event => $handler) {
-            $js[] = "jQuery('#{$id}').on('{$event}', {$handler});";
-        }
-
-        $this->getView()->registerJs(implode("\n", $js));
+        $this->getView()->registerJs($this->js);
     }
 
     public function hasModel()

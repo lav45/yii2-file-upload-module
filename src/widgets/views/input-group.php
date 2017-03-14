@@ -12,7 +12,7 @@ $widget->options['id'] .= '-uploader';
 
 $targetId = $widget->hasModel() ? Html::getInputId($widget->model, $widget->attribute) : $widget->getId();
 
-$widget->clientEvents['fileuploaddone'] = <<<JS
+$widget->addClientEvents('fileuploaddone', <<<JS
 function(e, data) {
     if (data.result.error) {
         alert(data.result.error);
@@ -33,7 +33,8 @@ function(e, data) {
         el.parent().find('.input-result').html(link);
     }
 }
-JS;
+JS
+);
 
 $input = $widget->hasModel() ?
     Html::activeHiddenInput($widget->model, $widget->attribute) :

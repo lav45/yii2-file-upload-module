@@ -149,11 +149,13 @@ class UploadAction extends Action
             $response->getHeaders()->set('Vary', 'Accept');
 
             $fileExtension = ($file->getExtension() ? '.' . $file->getExtension() : '');
+            $original_name = $file->name;
             do {
                 $file->name = uniqid() . $fileExtension;
             } while (file_exists($this->path . '/' . $file->name));
 
             $result = [
+                'original_name' => $original_name,
                 'name' => $file->name,
                 'type' => $file->type,
                 'size' => $file->size,
