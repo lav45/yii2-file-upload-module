@@ -25,7 +25,7 @@ use yii\web\UploadedFile;
  * {
  *     return [
  *         'upload-image' => [
- *             'class' => 'frontend\components\actions\UploadAction',
+ *             'class' => 'lav45\fileUpload\actions\UploadAction',
  *             'url' => '@web/assets/upload',
  *             'path' => '@webroot/assets/upload',
  *             'validatorOptions' => [
@@ -34,7 +34,7 @@ use yii\web\UploadedFile;
  *             ]
  *         ],
  *         'file-upload' => [
- *             'class' => 'frontend\components\actions\UploadAction',
+ *             'class' => 'lav45\fileUpload\actions\UploadAction',
  *             'url' => '/statics',
  *             'path' => '@webroot/statics',
  *             'uploadOnlyImage' => false,
