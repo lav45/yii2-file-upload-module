@@ -92,9 +92,7 @@ class UploadBehavior extends Behavior
      */
     public function beforeUpdate()
     {
-        $this->saveFile($this->getAttribute());
-
-        if ($this->unlinkOldFile === true) {
+        if ($this->saveFile($this->getAttribute()) && $this->unlinkOldFile === true) {
             $this->deleteFile($this->getOldAttribute());
         }
     }
@@ -115,14 +113,17 @@ class UploadBehavior extends Behavior
      */
     protected function saveFile($file)
     {
-        if (is_array($file)) {
-            foreach ($file as $item) {
-                $this->saveFile($item);
-            }
-            return true;
-        }
         if (empty($file)) {
             return false;
+        }
+        if (is_array($file)) {
+            $result = true;
+            foreach ($file as $item) {
+                if(!$this->saveFile($item)) {
+                    $result = false;
+                }
+            }
+            return $result;
         }
 
         $tempFile = $this->tempDir . '/' . $file;
@@ -143,14 +144,17 @@ class UploadBehavior extends Behavior
      */
     protected function deleteFile($file)
     {
-        if (is_array($file)) {
-            foreach ($file as $item) {
-                $this->deleteFile($item);
-            }
-            return true;
-        }
         if (empty($file)) {
             return false;
+        }
+        if (is_array($file)) {
+            $result = true;
+            foreach ($file as $item) {
+                if(!$this->deleteFile($item)) {
+                    $result = false;
+                }
+            }
+            return $result;
         }
 
         $file = $this->uploadDir . '/' . $file;
