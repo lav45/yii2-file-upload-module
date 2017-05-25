@@ -92,7 +92,11 @@ class UploadBehavior extends Behavior
      */
     public function beforeUpdate()
     {
-        if ($this->saveFile($this->getAttribute()) && $this->unlinkOldFile === true) {
+        if (
+            $this->isAttributeChanged() &&
+            $this->saveFile($this->getAttribute()) &&
+            $this->unlinkOldFile === true
+        ) {
             $this->deleteFile($this->getOldAttribute());
         }
     }
@@ -119,7 +123,7 @@ class UploadBehavior extends Behavior
         if (is_array($file)) {
             $result = true;
             foreach ($file as $item) {
-                if(!$this->saveFile($item)) {
+                if (!$this->saveFile($item)) {
                     $result = false;
                 }
             }
@@ -150,7 +154,7 @@ class UploadBehavior extends Behavior
         if (is_array($file)) {
             $result = true;
             foreach ($file as $item) {
-                if(!$this->deleteFile($item)) {
+                if (!$this->deleteFile($item)) {
                     $result = false;
                 }
             }
@@ -176,5 +180,13 @@ class UploadBehavior extends Behavior
     protected function getOldAttribute()
     {
         return $this->owner->getOldAttribute($this->attribute);
+    }
+
+    /**
+     * @return bool
+     */
+    protected function isAttributeChanged()
+    {
+        return $this->owner->isAttributeChanged($this->attribute);
     }
 }
