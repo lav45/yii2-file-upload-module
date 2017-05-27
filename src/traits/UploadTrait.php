@@ -48,5 +48,8 @@ trait UploadTrait
     /**
      * @return string
      */
-    abstract public function getUploadPath();
+    public function getUploadPath()
+    {
+        return '';
+    }
 }

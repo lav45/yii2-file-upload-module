@@ -61,6 +61,10 @@ class UploadAction extends Action
      */
     public $afterRun;
     /**
+     * @var array|\Closure
+     */
+    public $createFileName;
+    /**
      * @var string Path to directory where files will be uploaded
      */
     public $path;
@@ -148,15 +152,9 @@ class UploadAction extends Action
         } else {
             $response->getHeaders()->set('Vary', 'Accept');
 
-            $fileExtension = ($file->getExtension() ? '.' . $file->getExtension() : '');
-            $original_name = $file->name;
-            do {
-                $file->name = uniqid() . $fileExtension;
-            } while (file_exists($this->path . '/' . $file->name));
-
             $result = [
-                'original_name' => $original_name,
-                'name' => $file->name,
+                'original_name' => $file->name,
+                'name' => $file->name = $this->createFileName($file),
                 'type' => $file->type,
                 'size' => $file->size,
                 'url' => $this->url . '/' . $file->name,
@@ -173,5 +171,23 @@ class UploadAction extends Action
         }
 
         return $result;
+    }
+
+    /**
+     * @param UploadedFile $file
+     * @return string
+     */
+    protected function createFileName(UploadedFile $file)
+    {
+        $fileExtension = ($file->getExtension() ? '.' . $file->getExtension() : '');
+        if ($this->createFileName === null) {
+            do {
+                $file_name = uniqid() . $fileExtension;
+            } while (file_exists($this->path . '/' . $file_name));
+        } else {
+            $file_name = call_user_func($this->createFileName, $fileExtension, $this->path);
+        }
+
+        return $file_name;
     }
 }
