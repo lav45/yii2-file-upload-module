@@ -36,6 +36,8 @@ function(e, data) {
 JS
 );
 
+Html::addCssClass($widget->options, 'form-control');
+
 $input = $widget->hasModel() ?
     Html::activeHiddenInput($widget->model, $widget->attribute) :
     Html::hiddenInput($widget->name, $widget->value, ['id' => $widget->getId()]);

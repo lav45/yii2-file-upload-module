@@ -53,7 +53,7 @@ class UploadAction extends Action
      */
     public $uploadParam = 'file';
     /**
-     * @var array Model validator options
+     * @var array validator options for \yii\validators\FileValidator or \yii\validators\ImageValidator
      */
     public $validatorOptions = [];
     /**
