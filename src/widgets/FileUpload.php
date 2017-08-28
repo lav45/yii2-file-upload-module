@@ -16,7 +16,7 @@ class FileUpload extends InputWidget
     /**
      * @var string|array upload route
      */
-    public $url;
+    public $url = ['upload'];
     /**
      * @var \yii\base\Model|\lav45\fileUpload\traits\UploadTrait
      */
