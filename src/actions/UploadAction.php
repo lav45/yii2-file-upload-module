@@ -67,59 +67,63 @@ class UploadAction extends Action
     /**
      * @var string Path to directory where files will be uploaded
      */
-    public $path;
+    private $path;
     /**
      * @var string URL path to directory where files will be uploaded
      */
-    public $url = '@web/assets/upload';
+    private $url = '@web/assets/upload';
     /**
      * @var string Model validator name
      */
     private $validator = 'image';
 
     /**
-     * Initializes the object.
-     */
-    public function init()
-    {
-        parent::init();
-
-        $this->setPath($this->path);
-        $this->setUrl($this->url);
-    }
-
-    /**
      * @param string $path
-     * @throws InvalidConfigException
      */
     public function setPath($path)
     {
-        if (empty($path)) {
-            throw new InvalidConfigException('The "path" attribute must be set.');
-        }
-
-        $path = Yii::getAlias($path);
-        $path = rtrim($path, DIRECTORY_SEPARATOR);
-
-        if (!FileHelper::createDirectory($path)) {
-            throw new InvalidCallException("Directory specified in 'path' attribute doesn't exist or cannot be created.");
-        }
-
         $this->path = $path;
     }
 
     /**
-     * @param string $url
+     * @return string
      * @throws InvalidConfigException
+     */
+    public function getPath()
+    {
+        $path = Yii::getAlias($this->path);
+        $path = rtrim($path, DIRECTORY_SEPARATOR);
+
+        if (empty($path)) {
+            throw new InvalidConfigException('The "path" attribute must be set.');
+        }
+        if (!FileHelper::createDirectory($path)) {
+            throw new InvalidCallException("Directory specified in 'path' attribute doesn't exist or cannot be created.");
+        }
+        return $path;
+    }
+
+    /**
+     * @param string $url
      */
     public function setUrl($url)
     {
+        $this->url = $url;
+    }
+
+    /**
+     * @return string
+     * @throws InvalidConfigException
+     */
+    public function getUrl()
+    {
+        $url = Yii::getAlias($this->url);
+        $url = rtrim($url, '/');
+
         if (empty($url)) {
             throw new InvalidConfigException('The "url" attribute must be set.');
         }
-
-        $url = Yii::getAlias($url);
-        $this->url = rtrim($url, '/');
+        return $url;
     }
 
     /**
@@ -157,10 +161,10 @@ class UploadAction extends Action
                 'name' => $file->name = $this->createFileName($file),
                 'type' => $file->type,
                 'size' => $file->size,
-                'url' => $this->url . '/' . $file->name,
+                'url' => $this->getUrl() . '/' . $file->name,
             ];
 
-            if ($file->saveAs($this->path . '/' . $file->name) === false) {
+            if ($file->saveAs($this->getPath() . '/' . $file->name) === false) {
                 $result = ['error' => 'Failed to load file'];
                 @unlink($file->tempName);
             }
