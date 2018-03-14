@@ -67,6 +67,13 @@ class Page extends ActiveRecord
 {
     use UploadTrait;
 
+    public function rules()
+    {
+        return [
+            [['image'], 'string'],
+        ];
+    }
+
     public function behaviors()
     {
         return [
