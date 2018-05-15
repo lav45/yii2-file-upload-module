@@ -87,7 +87,9 @@ use lav45\fileUpload\widgets\FileUpload;
 
 $form = ActiveForm::begin();
 
-echo $form->field($model, 'image')->widget(FileUpload::className());
+echo $form->field($model, 'image')->widget(FileUpload::className(), [
+        'deletable' => !$model->isAttributeRequired('image'),
+    ]);
 
 // ...
 

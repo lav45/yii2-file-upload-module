@@ -1,6 +1,7 @@
 <?php
 /**
  * @var yii\web\View $this
+ * @var boolean $deletable
  */
 
 use yii\helpers\Html;
@@ -31,6 +32,29 @@ function(e, data) {
             });
 
         el.parent().find('.input-result').html(link);
+
+        var deletable = '{$deletable}';
+
+        if (deletable.length) {
+
+            var checkbox = jQuery('<input />', {
+                type: 'checkbox',
+                name: 'delete[{$widget->attribute}]',
+                value: 1,
+                id: 'cb-{$widget->attribute}'
+            }).css('vertical-align', 'middle');
+
+            el.parent().find('.input-delete').html(checkbox);
+
+            var label = jQuery('<label />', { for: 'cb-{$widget->attribute}' })
+                .css('vertical-align', 'middle')
+                .css('margin-left', '5px')
+                .css('margin-bottom', '0px')
+                .html('<span class="glyphicon glyphicon-trash"></span>');
+
+            label.insertAfter(checkbox);
+
+        }
     }
 }
 JS
@@ -59,4 +83,13 @@ $url = $widget->hasModel() ? $widget->model->getAttributeUrl($widget->attribute)
             <?= $value ?>
         <?php endif; ?>
     </span>
+    <?php if ($deletable): ?>
+        <span class="input-group-addon input-delete">
+            <?php if (!empty($value)): ?>
+                <?= Html::checkbox('delete[' . $widget->attribute . ']', false, ['id' => 'cb-' . $widget->attribute, 'style' => 'vertical-align: middle']) ?>
+                <label style="vertical-align: middle; margin-left: 5px; margin-bottom: 0px;"
+                       for="cb-<?= $widget->attribute ?>"><span class="glyphicon glyphicon-trash"></span></label>
+            <?php endif; ?>
+        </span>
+    <?php endif; ?>
 </div>

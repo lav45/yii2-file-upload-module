@@ -26,6 +26,10 @@ class FileUpload extends InputWidget
      */
     public $template = 'input-group';
     /**
+     * @var boolean
+     */
+    public $deletable = false;
+    /**
      * @var array the plugin options. For more information see the jQuery File Upload options documentation.
      * @see https://github.com/blueimp/jQuery-File-Upload/wiki/Options
      */
@@ -54,7 +58,7 @@ class FileUpload extends InputWidget
     
     protected function renderInput()
     {
-        return $this->render($this->template);
+        return $this->render($this->template, ['deletable' => $this->deletable]);
     }
 
     protected function registerAssets()
