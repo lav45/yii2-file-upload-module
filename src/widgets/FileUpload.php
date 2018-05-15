@@ -28,7 +28,7 @@ class FileUpload extends InputWidget
     /**
      * @var boolean
      */
-    public $deletable = false;
+    public $deletable = true;
     /**
      * @var array the plugin options. For more information see the jQuery File Upload options documentation.
      * @see https://github.com/blueimp/jQuery-File-Upload/wiki/Options
