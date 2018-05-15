@@ -13,6 +13,10 @@ $widget->options['id'] .= '-uploader';
 
 $targetId = $widget->hasModel() ? Html::getInputId($widget->model, $widget->attribute) : $widget->getId();
 
+if ($deletable) {
+    $deletable = !$widget->model->isAttributeRequired($widget->attribute);
+}
+
 $widget->addClientEvents('fileuploaddone', <<<JS
 function(e, data) {
     if (data.result.error) {

@@ -122,7 +122,7 @@ class UploadBehavior extends Behavior
     private function checkDeleted()
     {
         $result = false;
-        if (!empty(Yii::$app->request->post('delete')[$this->attribute])) {
+        if (!empty(Yii::$app->request->post('delete')[$this->attribute]) && !$this->owner->isAttributeRequired($this->attribute)) {
             if ($this->isAttributeChanged()) {
                 $this->deleteFile($this->getOldAttribute());
             } else {
