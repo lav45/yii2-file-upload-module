@@ -31,23 +31,37 @@ class UploadBehavior extends Behavior
      * @var string
      */
     public $attribute;
+
     /**
-     * @var string
+     * Directory for moving files after model saving
+     * For deffered call use as callback function
+     *
+     * @var string|callable
      */
     public $uploadDir;
+    
     /**
+     * Directory for temporary file saving
+     *
      * @var string
      */
     public $tempDir;
+
     /**
      * @var boolean If `true` current attribute file will be deleted
      */
     public $unlinkOldFile = true;
+
     /**
      * @var boolean If `true` current attribute file will be deleted after model deletion
      */
     public $unlinkOnDelete = true;
 
+    /**
+     * Init behavior
+     *
+     * @throws InvalidConfigException
+     */
     public function init()
     {
         parent::init();
@@ -57,32 +71,35 @@ class UploadBehavior extends Behavior
         } else {
             $this->tempDir = Yii::getAlias($this->tempDir);
         }
+
         if (empty($this->uploadDir)) {
             throw new InvalidConfigException("`uploadDir` must be set.");
-        } else {
-            $this->uploadDir = Yii::getAlias($this->uploadDir);
-        }
-        if (!FileHelper::createDirectory($this->uploadDir)) {
-            throw new InvalidCallException("Directory specified cannot be created.");
         }
     }
+
+    /**
+     * List of events
+     *
+     * @var array
+     */
+    public $events = [
+        ActiveRecord::EVENT_AFTER_INSERT  => 'afterInsert',
+        ActiveRecord::EVENT_BEFORE_UPDATE => 'beforeUpdate',
+        ActiveRecord::EVENT_BEFORE_DELETE => 'beforeDelete',
+    ];
 
     /**
      * @inheritdoc
      */
     public function events()
     {
-        return [
-            ActiveRecord::EVENT_BEFORE_INSERT => 'beforeInsert',
-            ActiveRecord::EVENT_BEFORE_UPDATE => 'beforeUpdate',
-            ActiveRecord::EVENT_BEFORE_DELETE => 'beforeDelete',
-        ];
+        return $this->events;
     }
 
     /**
-     * Function will be called before inserting the new record.
+     * Function will be called after inserting the new record.
      */
-    public function beforeInsert()
+    public function afterInsert()
     {
         $this->saveFile($this->getAttribute());
     }
@@ -117,6 +134,8 @@ class UploadBehavior extends Behavior
      */
     protected function saveFile($file)
     {
+        $this->createUploadDir();
+
         if (empty($file)) {
             return false;
         }
@@ -188,5 +207,21 @@ class UploadBehavior extends Behavior
     protected function isAttributeChanged()
     {
         return $this->owner->isAttributeChanged($this->attribute);
+    }
+
+    /**
+     * Create dir for upload
+     */
+    protected function createUploadDir()
+    {
+        if(is_callable($this->uploadDir)) {
+            $this->uploadDir = call_user_func($this->uploadDir, $this);
+        }
+
+        $this->uploadDir = Yii::getAlias($this->uploadDir);
+
+        if (!FileHelper::createDirectory($this->uploadDir)) {
+            throw new InvalidCallException("Directory specified cannot be created.");
+        }
     }
 }
