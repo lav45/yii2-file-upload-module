@@ -215,7 +215,7 @@ class UploadBehavior extends Behavior
     protected function createUploadDir()
     {
         if(is_callable($this->uploadDir)) {
-            $this->uploadDir = call_user_func($this->uploadDir, $this);
+            $this->uploadDir = call_user_func($this->uploadDir);
         }
 
         $this->uploadDir = Yii::getAlias($this->uploadDir);
