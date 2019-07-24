@@ -167,6 +167,8 @@ class UploadBehavior extends Behavior
      */
     protected function deleteFile($file)
     {
+        $this->createUploadDir();
+        
         if (empty($file)) {
             return false;
         }
