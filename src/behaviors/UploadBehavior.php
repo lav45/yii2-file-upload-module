@@ -3,11 +3,11 @@
 namespace lav45\fileUpload\behaviors;
 
 use Yii;
+use yii\base\Behavior;
+use yii\base\InvalidCallException;
 use yii\base\InvalidConfigException;
 use yii\db\ActiveRecord;
 use yii\helpers\FileHelper;
-use yii\base\Behavior;
-use yii\base\InvalidCallException;
 
 /**
  * Class UploadBehavior
@@ -39,7 +39,7 @@ class UploadBehavior extends Behavior
      * @var string|callable
      */
     public $uploadDir;
-    
+
     /**
      * Directory for temporary file saving
      *
@@ -59,7 +59,6 @@ class UploadBehavior extends Behavior
 
     /**
      * Init behavior
-     *
      * @throws InvalidConfigException
      */
     public function init()
@@ -79,11 +78,10 @@ class UploadBehavior extends Behavior
 
     /**
      * List of events
-     *
      * @var array
      */
     public $events = [
-        ActiveRecord::EVENT_AFTER_INSERT  => 'afterInsert',
+        ActiveRecord::EVENT_AFTER_INSERT => 'afterInsert',
         ActiveRecord::EVENT_BEFORE_UPDATE => 'beforeUpdate',
         ActiveRecord::EVENT_BEFORE_DELETE => 'beforeDelete',
     ];
@@ -101,6 +99,7 @@ class UploadBehavior extends Behavior
      */
     public function afterInsert()
     {
+        $this->createUploadDir();
         $this->saveFile($this->getAttribute());
     }
 
@@ -109,12 +108,19 @@ class UploadBehavior extends Behavior
      */
     public function beforeUpdate()
     {
-        if (
-            $this->isAttributeChanged() &&
-            $this->saveFile($this->getAttribute()) &&
-            $this->unlinkOldFile === true
-        ) {
-            $this->deleteFile($this->getOldAttribute());
+        $this->createUploadDir();
+
+        $old = $this->getOldAttribute();
+        $new = $this->getAttribute();
+        $updateFiles = array_intersect($old, $new);
+        $deleteFiles = array_diff($old, $updateFiles);
+        $createFiles = array_diff($new, $updateFiles);
+
+        if ($this->isAttributeChanged() && empty($createFiles) === false) {
+            $this->saveFile($createFiles);
+        }
+        if ($this->unlinkOldFile === true && empty($deleteFiles) === false) {
+            $this->deleteFile($deleteFiles);
         }
     }
 
@@ -124,89 +130,78 @@ class UploadBehavior extends Behavior
     public function beforeDelete()
     {
         if ($this->unlinkOnDelete === true) {
+            $this->createUploadDir();
             $this->deleteFile($this->getAttribute());
         }
     }
 
     /**
+     * Create specified file.
      * @param string|string[] $file name
-     * @return bool
      */
-    protected function saveFile($file)
+    private function saveFile($file)
     {
-        $this->createUploadDir();
-
         if (empty($file)) {
-            return false;
+            return;
         }
+
         if (is_array($file)) {
-            $result = true;
             foreach ($file as $item) {
-                if (!$this->saveFile($item)) {
-                    $result = false;
-                }
+                $this->saveFile($item);
             }
-            return $result;
+        } else {
+            $tempFile = $this->tempDir . '/' . $file;
+            $uploadFile = $this->uploadDir . '/' . $file;
+
+            if (is_file($tempFile)) {
+                rename($tempFile, $uploadFile);
+            }
         }
-
-        $tempFile = $this->tempDir . '/' . $file;
-        $uploadFile = $this->uploadDir . '/' . $file;
-
-        if (is_file($tempFile)) {
-            return rename($tempFile, $uploadFile);
-        }
-
-        return false;
     }
 
     /**
      * Delete specified file.
-     *
-     * @param string $file File name
-     * @return bool `true` if file was successfully deleted
+     * @param string|string[] $file File name
      */
-    protected function deleteFile($file)
+    private function deleteFile($file)
     {
-        $this->createUploadDir();
-        
         if (empty($file)) {
-            return false;
+            return;
         }
+
         if (is_array($file)) {
-            $result = true;
             foreach ($file as $item) {
-                if (!$this->deleteFile($item)) {
-                    $result = false;
-                }
+                $this->deleteFile($item);
             }
-            return $result;
+        } else {
+            $file = $this->uploadDir . '/' . $file;
+
+            if (is_file($file)) {
+                unlink($file);
+            }
         }
-
-        $file = $this->uploadDir . '/' . $file;
-
-        return is_file($file) ? unlink($file) : false;
     }
 
     /**
-     * @return string|null
+     * @return string[]
      */
-    protected function getAttribute()
+    private function getAttribute()
     {
-        return $this->owner[$this->attribute];
+        return (array) $this->owner[$this->attribute];
     }
 
     /**
-     * @return string|null
+     * @return string[]
      */
-    protected function getOldAttribute()
+    private function getOldAttribute()
     {
-        return $this->owner->getOldAttribute($this->attribute);
+        return (array) $this->owner->getOldAttribute($this->attribute);
     }
 
     /**
      * @return bool
      */
-    protected function isAttributeChanged()
+    private function isAttributeChanged()
     {
         return $this->owner->isAttributeChanged($this->attribute);
     }
@@ -214,9 +209,9 @@ class UploadBehavior extends Behavior
     /**
      * Create dir for upload
      */
-    protected function createUploadDir()
+    private function createUploadDir()
     {
-        if(is_callable($this->uploadDir)) {
+        if (is_callable($this->uploadDir)) {
             $this->uploadDir = call_user_func($this->uploadDir);
         }
 
