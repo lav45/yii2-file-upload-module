@@ -151,7 +151,7 @@ class UploadBehavior extends Behavior
             }
         } else {
             $tempFile = $this->tempDir . '/' . $file;
-            $uploadFile = $this->uploadDir . '/' . $file;
+            $uploadFile = $this->getUploadDir() . '/' . $file;
 
             if (is_file($tempFile)) {
                 rename($tempFile, $uploadFile);
@@ -174,7 +174,7 @@ class UploadBehavior extends Behavior
                 $this->deleteFile($item);
             }
         } else {
-            $file = $this->uploadDir . '/' . $file;
+            $file = $this->getUploadDir() . '/' . $file;
 
             if (is_file($file)) {
                 unlink($file);
@@ -207,17 +207,26 @@ class UploadBehavior extends Behavior
     }
 
     /**
+     * @return string|null
+     */
+    public function getUploadDir()
+    {
+        $path = $this->uploadDir;
+        if (is_callable($path)) {
+            $path = $path();
+        }
+
+        $path = Yii::getAlias($path);
+
+        return  $path ?: null;
+    }
+
+    /**
      * Create dir for upload
      */
     private function createUploadDir()
     {
-        if (is_callable($this->uploadDir)) {
-            $this->uploadDir = call_user_func($this->uploadDir);
-        }
-
-        $this->uploadDir = Yii::getAlias($this->uploadDir);
-
-        if (!FileHelper::createDirectory($this->uploadDir)) {
+        if (!FileHelper::createDirectory($this->getUploadDir())) {
             throw new InvalidCallException("Directory specified cannot be created.");
         }
     }
