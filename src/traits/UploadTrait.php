@@ -25,7 +25,7 @@ trait UploadTrait
      */
     public function getAttributeUrl($attribute)
     {
-        /** @var $this \yii\base\Model */
+        /** @var $this \yii\base\Model|self */
         return $this->getUploadUrl() . '/' . Html::getAttributeValue($this, $attribute);
     }
 
