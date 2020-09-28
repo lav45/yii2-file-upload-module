@@ -4,8 +4,8 @@ namespace lav45\fileUpload\behaviors;
 
 use Yii;
 use yii\base\Behavior;
-use yii\base\InvalidArgumentException;
 use yii\base\InvalidCallException;
+use yii\base\InvalidConfigException;
 use yii\db\ActiveRecord;
 use yii\helpers\FileHelper;
 
@@ -39,7 +39,7 @@ class UploadBehavior extends Behavior
     public $uploadDir;
     /**
      * Directory for temporary file saving
-     * @var string|callable
+     * @var string
      */
     public $tempDir;
     /**
@@ -51,22 +51,46 @@ class UploadBehavior extends Behavior
      */
     public $unlinkOnDelete = true;
 
+    private $deleteFiles = [];
+    private $createFiles = [];
+
     /**
-     * List of events
-     * @var array
+     * Init behavior
+     * @throws InvalidConfigException
+     * @throws \yii\base\Exception
      */
-    public $events = [
-        ActiveRecord::EVENT_AFTER_INSERT => 'afterInsert',
-        ActiveRecord::EVENT_BEFORE_UPDATE => 'beforeUpdate',
-        ActiveRecord::EVENT_BEFORE_DELETE => 'beforeDelete',
-    ];
+    public function init()
+    {
+        parent::init();
+
+        if (empty($this->tempDir)) {
+            throw new InvalidConfigException("`tempDir` must be set.");
+        }
+        $this->tempDir = Yii::getAlias($this->tempDir);
+
+        if (empty($this->uploadDir)) {
+            throw new InvalidConfigException("`uploadDir` must be set.");
+        }
+        if (is_callable($this->uploadDir)) {
+            $this->uploadDir = call_user_func($this->uploadDir);
+        } else {
+            $this->uploadDir = Yii::getAlias($this->uploadDir);
+        }
+
+        $this->createUploadDir($this->uploadDir);
+    }
 
     /**
      * @inheritdoc
      */
     public function events()
     {
-        return $this->events;
+        return [
+            ActiveRecord::EVENT_AFTER_INSERT => 'afterInsert',
+            ActiveRecord::EVENT_BEFORE_UPDATE => 'beforeUpdate',
+            ActiveRecord::EVENT_AFTER_UPDATE => 'afterUpdate',
+            ActiveRecord::EVENT_BEFORE_DELETE => 'beforeDelete',
+        ];
     }
 
     /**
@@ -74,7 +98,6 @@ class UploadBehavior extends Behavior
      */
     public function afterInsert()
     {
-        $this->createUploadDir();
         $this->saveFile($this->getAttribute());
     }
 
@@ -83,19 +106,24 @@ class UploadBehavior extends Behavior
      */
     public function beforeUpdate()
     {
-        $this->createUploadDir();
-
         $old = $this->getOldAttribute();
         $new = $this->getAttribute();
-        $updateFiles = array_intersect($old, $new);
-        $deleteFiles = array_diff($old, $updateFiles);
-        $createFiles = array_diff($new, $updateFiles);
 
-        if ($this->isAttributeChanged() && empty($createFiles) === false) {
-            $this->saveFile($createFiles);
+        $updateFiles = array_intersect($old, $new);
+        $this->deleteFiles = array_diff($old, $updateFiles);
+        $this->createFiles = array_diff($new, $updateFiles);
+    }
+
+    /**
+     * Function will be called after updating the record.
+     */
+    public function afterUpdate()
+    {
+        if (empty($this->createFiles) === false) {
+            $this->saveFile($this->createFiles);
         }
-        if ($this->unlinkOldFile === true && empty($deleteFiles) === false) {
-            $this->deleteFile($deleteFiles);
+        if ($this->unlinkOldFile === true && empty($this->deleteFiles) === false) {
+            $this->deleteFile($this->deleteFiles);
         }
     }
 
@@ -105,7 +133,6 @@ class UploadBehavior extends Behavior
     public function beforeDelete()
     {
         if ($this->unlinkOnDelete === true) {
-            $this->createUploadDir();
             $this->deleteFile($this->getAttribute());
         }
     }
@@ -125,13 +152,22 @@ class UploadBehavior extends Behavior
                 $this->saveFile($item);
             }
         } else {
-            $tempFile = $this->getTempDir() . '/' . $file;
-            $uploadFile = $this->getUploadDir() . '/' . $file;
+            $tempFile = $this->tempDir . '/' . $file;
+            $uploadFile = $this->uploadDir . '/' . $file;
 
             if (is_file($tempFile)) {
-                rename($tempFile, $uploadFile);
+                $this->moveFile($tempFile, $uploadFile);
             }
         }
+    }
+
+    /**
+     * @param string $tempFile
+     * @param string $uploadFile
+     */
+    protected function moveFile($tempFile, $uploadFile)
+    {
+        rename($tempFile, $uploadFile);
     }
 
     /**
@@ -149,12 +185,20 @@ class UploadBehavior extends Behavior
                 $this->deleteFile($item);
             }
         } else {
-            $file = $this->getUploadDir() . '/' . $file;
+            $file = $this->uploadDir . '/' . $file;
 
             if (is_file($file)) {
-                unlink($file);
+                $this->unlinkFile($file);
             }
         }
+    }
+
+    /**
+     * @param string $file
+     */
+    protected function unlinkFile($file)
+    {
+        unlink($file);
     }
 
     /**
@@ -162,7 +206,7 @@ class UploadBehavior extends Behavior
      */
     private function getAttribute()
     {
-        return (array) $this->owner[$this->attribute];
+        return (array)$this->owner[$this->attribute];
     }
 
     /**
@@ -170,56 +214,17 @@ class UploadBehavior extends Behavior
      */
     private function getOldAttribute()
     {
-        return (array) $this->owner->getOldAttribute($this->attribute);
-    }
-
-    /**
-     * @return bool
-     */
-    private function isAttributeChanged()
-    {
-        return $this->owner->isAttributeChanged($this->attribute);
-    }
-
-    /**
-     * @return string
-     */
-    public function getUploadDir()
-    {
-        return $this->normalizePath($this->uploadDir);
-    }
-
-    /**
-     * @return string
-     */
-    public function getTempDir()
-    {
-        return $this->normalizePath($this->tempDir);
-    }
-
-    /**
-     * @param string $path
-     * @return string
-     */
-    private function normalizePath($path)
-    {
-        if (is_callable($path)) {
-            $dir = $path();
-        } else {
-            $dir = Yii::getAlias($path, false);
-        }
-        if (empty($dir)) {
-            throw new InvalidArgumentException("Invalid path: {$dir}");
-        }
-        return $dir;
+        return (array)$this->owner->getOldAttribute($this->attribute);
     }
 
     /**
      * Create dir for upload
+     * @param string $path
+     * @throws \yii\base\Exception
      */
-    private function createUploadDir()
+    protected function createUploadDir($path)
     {
-        if (FileHelper::createDirectory($this->getUploadDir()) === false) {
+        if (FileHelper::createDirectory($path) === false) {
             throw new InvalidCallException("Directory specified cannot be created.");
         }
     }
