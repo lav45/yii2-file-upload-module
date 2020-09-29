@@ -71,13 +71,6 @@ class UploadBehavior extends Behavior
         if (empty($this->uploadDir)) {
             throw new InvalidConfigException("`uploadDir` must be set.");
         }
-        if (is_callable($this->uploadDir)) {
-            $this->uploadDir = call_user_func($this->uploadDir);
-        } else {
-            $this->uploadDir = Yii::getAlias($this->uploadDir);
-        }
-
-        $this->createUploadDir($this->uploadDir);
     }
 
     /**
@@ -98,6 +91,8 @@ class UploadBehavior extends Behavior
      */
     public function afterInsert()
     {
+        $this->uploadDir = $this->getUploadDir($this->uploadDir);
+        $this->createUploadDir($this->uploadDir);
         $this->saveFile($this->getAttribute());
     }
 
@@ -119,7 +114,9 @@ class UploadBehavior extends Behavior
      */
     public function afterUpdate()
     {
+        $this->uploadDir = $this->getUploadDir($this->uploadDir);
         if (empty($this->createFiles) === false) {
+            $this->createUploadDir($this->uploadDir);
             $this->saveFile($this->createFiles);
         }
         if ($this->unlinkOldFile === true && empty($this->deleteFiles) === false) {
@@ -133,6 +130,7 @@ class UploadBehavior extends Behavior
     public function beforeDelete()
     {
         if ($this->unlinkOnDelete === true) {
+            $this->uploadDir = $this->getUploadDir($this->uploadDir);
             $this->deleteFile($this->getAttribute());
         }
     }
@@ -215,6 +213,18 @@ class UploadBehavior extends Behavior
     private function getOldAttribute()
     {
         return (array)$this->owner->getOldAttribute($this->attribute);
+    }
+
+    /**
+     * @param string|callable $path
+     * @return bool|string
+     */
+    protected function getUploadDir($path)
+    {
+        if (is_callable($path)) {
+            $path = call_user_func($path);
+        }
+        return Yii::getAlias($path);
     }
 
     /**
