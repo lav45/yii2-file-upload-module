@@ -14,7 +14,7 @@ use yii\web\UploadedFile;
 
 /**
  * Class UploadAction
- * @package vova07\imperavi\actions
+ * @package lav45\fileUpload\actions
  *
  * UploadAction for images and files.
  *
@@ -88,6 +88,7 @@ class UploadAction extends Action
     /**
      * @return string
      * @throws InvalidConfigException
+     * @throws \yii\base\Exception
      */
     public function getPath()
     {
@@ -142,11 +143,11 @@ class UploadAction extends Action
         $response = Yii::$app->getResponse();
         $response->format = Response::FORMAT_JSON;
 
-        if (Yii::$app->getRequest()->getIsPost() === false) {
-            throw new BadRequestHttpException('Only POST is allowed');
-        }
-
         $file = UploadedFile::getInstanceByName($this->uploadParam);
+
+        if ($file === null) {
+            throw new BadRequestHttpException('Incorrect upload file');
+        }
 
         $model = new DynamicModel(['file' => $file]);
         $model->addRule('file', $this->validator, $this->validatorOptions);
@@ -186,7 +187,7 @@ class UploadAction extends Action
         $fileExtension = ($file->getExtension() ? '.' . $file->getExtension() : '');
         if ($this->createFileName === null) {
             do {
-                $file_name = uniqid() . $fileExtension;
+                $file_name = uniqid('', false) . $fileExtension;
             } while (file_exists($this->path . '/' . $file_name));
         } else {
             $file_name = call_user_func($this->createFileName, $fileExtension, $this->path);
