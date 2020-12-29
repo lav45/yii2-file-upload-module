@@ -50,6 +50,10 @@ class UploadBehavior extends Behavior
      * @var boolean If `true` current attribute file will be deleted after model deletion
      */
     public $unlinkOnDelete = true;
+    /**
+     * @var boolean move or copy source file to storage directory
+     */
+    public $moveFile = true;
 
     private $deleteFiles = [];
     private $createFiles = [];
@@ -138,34 +142,39 @@ class UploadBehavior extends Behavior
     /**
      * Create specified file.
      * @param string|string[] $file name
+     * @throws Exception
      */
     private function saveFile($file)
     {
         if (empty($file)) {
             return;
         }
-
         if (is_array($file)) {
             foreach ($file as $item) {
                 $this->saveFile($item);
             }
-        } else {
-            $tempFile = $this->tempDir . '/' . $file;
-            $uploadFile = $this->uploadDir . '/' . $file;
-
-            if (is_file($tempFile)) {
-                $this->moveFile($tempFile, $uploadFile);
-            }
+            return;
         }
+        $this->moveFile($file);
     }
 
     /**
-     * @param string $tempFile
-     * @param string $uploadFile
+     * @param string $file_name
+     * @throws Exception
      */
-    protected function moveFile($tempFile, $uploadFile)
+    protected function moveFile($file_name)
     {
-        rename($tempFile, $uploadFile);
+        $tempFile = $this->tempDir . '/' . $file_name;
+        $uploadFile = $this->uploadDir . '/' . $file_name;
+
+        if (file_exists($tempFile) === false) {
+            throw new Exception("File '{$file_name}' not found!");
+        }
+        if ($this->moveFile === true) {
+            rename($tempFile, $uploadFile);
+        } elseif (file_exists($uploadFile) === false) {
+            copy($tempFile, $uploadFile);
+        }
     }
 
     /**
@@ -177,26 +186,24 @@ class UploadBehavior extends Behavior
         if (empty($file)) {
             return;
         }
-
         if (is_array($file)) {
             foreach ($file as $item) {
                 $this->deleteFile($item);
             }
-        } else {
-            $file = $this->uploadDir . '/' . $file;
-
-            if (is_file($file)) {
-                $this->unlinkFile($file);
-            }
+            return;
         }
+        $this->unlinkFile($file);
     }
 
     /**
-     * @param string $file
+     * @param string $file_name
      */
-    protected function unlinkFile($file)
+    protected function unlinkFile($file_name)
     {
-        unlink($file);
+        $file = $this->uploadDir . '/' . $file_name;
+        if (is_file($file)) {
+            unlink($file);
+        }
     }
 
     /**
