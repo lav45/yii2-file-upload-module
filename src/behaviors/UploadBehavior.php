@@ -162,12 +162,16 @@ class UploadBehavior extends Behavior
         $tempFile = $this->getTempDir() . '/' . $file_name;
         $uploadFile = $this->getUploadDir() . '/' . $file_name;
 
+        if (file_exists($uploadFile)) {
+            return;
+        }
         if (file_exists($tempFile) === false) {
             throw new Exception("File '{$file_name}' not found!");
         }
+
         if ($this->moveFile === true) {
             rename($tempFile, $uploadFile);
-        } elseif (file_exists($uploadFile) === false) {
+        } else {
             copy($tempFile, $uploadFile);
         }
     }
