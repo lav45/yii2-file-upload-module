@@ -1,13 +1,12 @@
 <?php
 
-namespace lav45\fileUpload\behaviors;
+namespace lav45\fileUpload;
 
+use Closure;
 use Yii;
 use yii\base\Behavior;
-use yii\base\InvalidCallException;
 use yii\base\InvalidConfigException;
 use yii\db\ActiveRecord;
-use yii\helpers\FileHelper;
 
 /**
  * Class UploadBehavior
@@ -17,8 +16,6 @@ use yii\helpers\FileHelper;
  * ```
  * 'uploadBehavior' => [
  *     'class' => UploadBehavior::class,
- *     'uploadDir' => '@storagePath/upload/dir',
- *     'tempDir' => '@runtime/upload',
  *     'attribute' => 'image',
  * ]
  * ```
@@ -27,6 +24,8 @@ use yii\helpers\FileHelper;
  */
 class UploadBehavior extends Behavior
 {
+    use FileSystemTrait;
+
     /**
      * @var string
      */
@@ -34,14 +33,13 @@ class UploadBehavior extends Behavior
     /**
      * Directory for moving files after model saving
      * For deferred call use as callback function
-     * @var string|callable
+     * @var string|callable|null
      */
     public $uploadDir;
     /**
-     * Directory for temporary file saving
-     * @var string
+     * @var string Directory for temporary file saving
      */
-    public $tempDir;
+    public $tempDir = '/temp';
     /**
      * @var boolean If `true` current attribute file will be deleted
      */
@@ -57,23 +55,6 @@ class UploadBehavior extends Behavior
 
     private $deleteFiles = [];
     private $createFiles = [];
-
-    /**
-     * Init behavior
-     * @throws InvalidConfigException
-     * @throws \yii\base\Exception
-     */
-    public function init()
-    {
-        parent::init();
-
-        if (empty($this->tempDir)) {
-            throw new InvalidConfigException("`tempDir` must be set.");
-        }
-        if (empty($this->uploadDir)) {
-            throw new InvalidConfigException("`uploadDir` must be set.");
-        }
-    }
 
     /**
      * @inheritdoc
@@ -93,7 +74,6 @@ class UploadBehavior extends Behavior
      */
     public function afterInsert()
     {
-        $this->createUploadDir();
         $this->saveFile($this->getAttribute());
     }
 
@@ -116,7 +96,6 @@ class UploadBehavior extends Behavior
     public function afterUpdate()
     {
         if (empty($this->createFiles) === false) {
-            $this->createUploadDir();
             $this->saveFile($this->createFiles);
         }
         if ($this->unlinkOldFile === true && empty($this->deleteFiles) === false) {
@@ -141,12 +120,9 @@ class UploadBehavior extends Behavior
      */
     private function saveFile($file)
     {
-        if (empty($file)) {
-            return;
-        }
         if (is_array($file)) {
             foreach ($file as $item) {
-                $this->saveFile($item);
+                $this->moveFile($item);
             }
             return;
         }
@@ -154,54 +130,56 @@ class UploadBehavior extends Behavior
     }
 
     /**
-     * @param string $file_name
+     * @param string $file
      * @throws Exception
      */
-    protected function moveFile($file_name)
+    protected function moveFile($file)
     {
-        $tempFile = $this->getTempDir() . '/' . $file_name;
-        $uploadFile = $this->getUploadDir() . '/' . $file_name;
-
-        if (file_exists($uploadFile)) {
+        if (empty($file)) {
             return;
         }
-        if (file_exists($tempFile) === false) {
-            throw new Exception("File '{$file_name}' not found!");
+        $fs = $this->getFs();
+        $tempFile = Yii::getAlias($this->tempDir) . '/' . $file;
+        $uploadFile = $this->getUploadDir() . '/' . $file;
+
+        if ($fs->has($uploadFile)) {
+            return;
+        }
+        if ($fs->has($tempFile) === false) {
+            throw new Exception("File '{$tempFile}' not found!");
         }
 
         if ($this->moveFile === true) {
-            rename($tempFile, $uploadFile);
+            $fs->rename($tempFile, $uploadFile);
         } else {
-            copy($tempFile, $uploadFile);
+            $fs->copy($tempFile, $uploadFile);
         }
     }
 
     /**
      * Delete specified file.
      * @param string|string[] $file File name
+     * @throws InvalidConfigException
      */
     private function deleteFile($file)
     {
-        if (empty($file)) {
-            return;
-        }
         if (is_array($file)) {
             foreach ($file as $item) {
-                $this->deleteFile($item);
+                $this->unlinkFile($item);
             }
-            return;
+        } else {
+            $this->unlinkFile($file);
         }
-        $this->unlinkFile($file);
     }
 
     /**
-     * @param string $file_name
+     * @param string $file
+     * @throws InvalidConfigException
      */
-    protected function unlinkFile($file_name)
+    protected function unlinkFile($file)
     {
-        $file = $this->getUploadDir() . '/' . $file_name;
-        if (is_file($file)) {
-            unlink($file);
+        if ($file) {
+            $this->getFs()->delete($this->getUploadDir() . '/' . $file);
         }
     }
 
@@ -222,34 +200,17 @@ class UploadBehavior extends Behavior
     }
 
     /**
-     * @return string
+     * @return string|null
      */
     protected function getUploadDir()
     {
         $path = $this->uploadDir;
-        if (is_callable($path)) {
-            $path = call_user_func($path);
+        if ($path === null && $this->owner instanceof UploadInterface) {
+            return $this->owner->getUploadDir();
         }
-        return Yii::getAlias($path);
-    }
-
-    /**
-     * @return string
-     */
-    protected function getTempDir()
-    {
-        return Yii::getAlias($this->tempDir);
-    }
-
-    /**
-     * Create dir for upload
-     * @throws \yii\base\Exception
-     */
-    protected function createUploadDir()
-    {
-        $path = $this->getUploadDir();
-        if (FileHelper::createDirectory($path) === false) {
-            throw new InvalidCallException("Directory specified cannot be created.");
+        if ($path instanceof Closure || (is_array($path) && is_callable($path))) {
+            return $path();
         }
+        return $path;
     }
 }

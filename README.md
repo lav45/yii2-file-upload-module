@@ -18,7 +18,7 @@ Either run
 or add
 
 ```
-"lav45/yii2-file-upload-module": "^0.1"
+"lav45/yii2-file-upload-module": "1.0.*"
 ```
 
 to the require section of your `composer.json` file.
@@ -28,18 +28,25 @@ Basic Usage:
 ------
 
 Add path aliases and url to your file store in the main config
+You need to configure your web server to the `@storageDir` directory and specify `@storageUrl`
 ```php
 return [
     'aliases' => [
-        '@storagePath' => '/path/to/upload/dir',
-        '@storageUrl' => '/url/to/upload/dir',
+        '@storageDir' => '@common/storage',
+        '@storageUrl' => 'https://site.com/storage',
+    ],
+    'components' => [
+        'fs' => [
+            'class' => creocoder\flysystem\LocalFilesystem::className(),
+            'path' => '@storageDir',
+        ]
     ],
 ];
 ```
 
 Add action to the main controller
 ```php
-use lav45\fileUpload\actions\UploadAction;
+use lav45\fileUpload\UploadAction;
 
 class PageController extends Controller
 {
@@ -48,22 +55,19 @@ class PageController extends Controller
         return [
             'upload' => [
                 'class' => UploadAction::className(),
-                'path' => Page::getTempDir(),
-                //'uploadOnlyImage' => false,
             ],
         ];
     }
-    
-    // ...
 }
 ```
 
 Need to add to your ActiveRecord model
 ```php
-use lav45\fileUpload\traits\UploadTrait;
-use lav45\fileUpload\behaviors\UploadBehavior;
+use lav45\fileUpload\UploadTrait;
+use lav45\fileUpload\UploadBehavior;
+use lav45\fileUpload\UploadInterface;
 
-class Page extends ActiveRecord
+class Page extends ActiveRecord implements UploadInterface
 {
     use UploadTrait;
 
@@ -77,26 +81,31 @@ class Page extends ActiveRecord
     public function behaviors()
     {
         return [
-            'uploadBehavior' => [
+            [
                 'class' => UploadBehavior::className(),
-                'uploadDir' => $this->getUploadDir(),
-                'tempDir' => $this->getTempDir(),
                 'attribute' => 'image',
             ],
         ];
+    }
+    
+    public function getUploadPath()
+    {
+        return '/page/' . $this->id;
     }
 }
 ```
 
 Need to add a field for uploading files
 ```php
-use lav45\fileUpload\widgets\FileUpload;
+/**
+ * @var Page $model
+ */
+ 
+use lav45\fileUpload\widget\FileUpload;
 
 $form = ActiveForm::begin();
 
 echo $form->field($model, 'image')->widget(FileUpload::className());
-
-// ...
 
 ActiveForm::end();
 ```

@@ -1,20 +1,18 @@
 <?php
 
-namespace lav45\fileUpload\actions;
+namespace lav45\fileUpload;
 
 use Yii;
 use yii\base\Action;
 use yii\base\DynamicModel;
-use yii\base\InvalidCallException;
 use yii\base\InvalidConfigException;
-use yii\helpers\FileHelper;
 use yii\web\BadRequestHttpException;
 use yii\web\Response;
 use yii\web\UploadedFile;
 
 /**
  * Class UploadAction
- * @package lav45\fileUpload\actions
+ * @package lav45\fileUpload
  *
  * UploadAction for images and files.
  *
@@ -25,18 +23,16 @@ use yii\web\UploadedFile;
  * {
  *     return [
  *         'upload-image' => [
- *             'class' => 'lav45\fileUpload\actions\UploadAction',
- *             'url' => '@web/assets/upload',
- *             'path' => '@webroot/assets/upload',
+ *             'class' => 'lav45\fileUpload\UploadAction',
  *             'validatorOptions' => [
  *                 'maxWidth' => 1000,
  *                 'maxHeight' => 1000
  *             ]
  *         ],
  *         'file-upload' => [
- *             'class' => 'lav45\fileUpload\actions\UploadAction',
+ *             'class' => 'lav45\fileUpload\UploadAction',
  *             'url' => '/statics',
- *             'path' => '@webroot/statics',
+ *             'path' => '/statics',
  *             'uploadOnlyImage' => false,
  *             'validatorOptions' => [
  *                 'maxSize' => 40000
@@ -48,8 +44,10 @@ use yii\web\UploadedFile;
  */
 class UploadAction extends Action
 {
+    use FileSystemTrait;
+
     /**
-     * @var string Variable's name that Imperavi Redactor sent upon image/file upload.
+     * @var string The name of the variable that the form submits when the image/file is upload.
      */
     public $uploadParam = 'file';
     /**
@@ -67,77 +65,24 @@ class UploadAction extends Action
     /**
      * @var string Path to directory where files will be uploaded
      */
-    private $path;
+    public $path = '/temp';
     /**
      * @var string URL path to directory where files will be uploaded
      */
-    private $url = '@web/assets/upload';
+    public $url = '@storageUrl/temp';
     /**
      * @var string Model validator name
      */
     private $validator = 'image';
 
     /**
-     * @param string $path
-     */
-    public function setPath($path)
-    {
-        $this->path = $path;
-    }
-
-    /**
-     * @return string
-     * @throws InvalidConfigException
-     * @throws \yii\base\Exception
-     */
-    public function getPath()
-    {
-        $path = Yii::getAlias($this->path);
-        $path = rtrim($path, DIRECTORY_SEPARATOR);
-
-        if (empty($path)) {
-            throw new InvalidConfigException('The "path" attribute must be set.');
-        }
-        if (!FileHelper::createDirectory($path)) {
-            throw new InvalidCallException("Directory specified in 'path' attribute doesn't exist or cannot be created.");
-        }
-        return $path;
-    }
-
-    /**
-     * @param string $url
-     */
-    public function setUrl($url)
-    {
-        $this->url = $url;
-    }
-
-    /**
-     * @return string
-     * @throws InvalidConfigException
-     */
-    public function getUrl()
-    {
-        $url = Yii::getAlias($this->url);
-        $url = rtrim($url, '/');
-
-        if (empty($url)) {
-            throw new InvalidConfigException('The "url" attribute must be set.');
-        }
-        return $url;
-    }
-
-    /**
      * @param boolean $flag
      */
     public function setUploadOnlyImage($flag)
     {
-        $this->validator = $flag === true ? 'image' : 'file';
+        $this->validator = $flag ? 'image' : 'file';
     }
 
-    /**
-     * @inheritdoc
-     */
     public function run()
     {
         $response = Yii::$app->getResponse();
@@ -156,31 +101,51 @@ class UploadAction extends Action
             $result = ['error' => $model->getFirstError('file')];
         } else {
             $response->getHeaders()->set('Vary', 'Accept');
-
+            $file_name = $this->createFileName($file);
+            $file_url = Yii::getAlias($this->url) . '/' . $file_name;
             $result = [
                 'original_name' => $file->name,
-                'name' => $file->name = $this->createFileName($file),
+                'name' => $file_name,
                 'type' => $file->type,
                 'size' => $file->size,
-                'url' => $this->getUrl() . '/' . $file->name,
+                'url' => $file_url,
             ];
 
-            if ($file->saveAs($this->getPath() . '/' . $file->name) === false) {
+            if ($this->moveFile($file->tempName, $file_name) === false) {
                 $result = ['error' => 'Failed to load file'];
-                @unlink($file->tempName);
             }
         }
 
         if (is_callable($this->afterRun)) {
             $result = call_user_func($this->afterRun, $result);
         }
-
         return $result;
+    }
+
+    /**
+     * @param string $source
+     * @param string $file_name
+     * @return bool
+     * @throws Exception
+     * @throws InvalidConfigException
+     */
+    protected function moveFile($source, $file_name)
+    {
+        $stream = fopen($source, 'rb+');
+        if ($stream === false) {
+            if (YII_DEBUG) {
+                throw new Exception("File '{$source}' not found!");
+            }
+            return false;
+        }
+        $file_path = Yii::getAlias($this->path) . '/' . $file_name;
+        return $this->getFs()->writeStream($file_path, $stream);
     }
 
     /**
      * @param UploadedFile $file
      * @return string
+     * @throws InvalidConfigException
      */
     protected function createFileName(UploadedFile $file)
     {
@@ -188,11 +153,11 @@ class UploadAction extends Action
         if ($this->createFileName === null) {
             do {
                 $file_name = uniqid('', false) . $fileExtension;
-            } while (file_exists($this->path . '/' . $file_name));
+                $file_path = Yii::getAlias($this->path) . '/' . $file_name;
+            } while ($this->getFs()->has($file_path));
         } else {
-            $file_name = call_user_func($this->createFileName, $fileExtension, $this->path);
+            $file_name = call_user_func($this->createFileName, $fileExtension);
         }
-
         return $file_name;
     }
 }

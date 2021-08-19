@@ -1,15 +1,14 @@
 <?php
 
-namespace lav45\fileUpload\widgets;
+namespace lav45\fileUpload\widget;
 
-use yii\base\Model;
-use yii\helpers\Url;
 use yii\helpers\Json;
+use yii\helpers\Url;
 use yii\widgets\InputWidget;
 
 /**
  * Class FileUpload
- * @package lav45\fileUpload\widgets
+ * @package lav45\fileUpload\widget
  */
 class FileUpload extends InputWidget
 {
@@ -18,7 +17,7 @@ class FileUpload extends InputWidget
      */
     public $url = ['upload'];
     /**
-     * @var \yii\base\Model|\lav45\fileUpload\traits\UploadTrait
+     * @var \yii\base\Model|\lav45\fileUpload\UploadInterface
      */
     public $model;
     /**
@@ -35,13 +34,9 @@ class FileUpload extends InputWidget
      */
     private $js;
 
-    public function init()
-    {
-        parent::init();
-
-        $this->clientOptions['url'] = Url::to($this->url);
-    }
-
+    /**
+     * @return string
+     */
     public function run()
     {
         $input = $this->renderInput();
@@ -51,7 +46,10 @@ class FileUpload extends InputWidget
 
         return $input;
     }
-    
+
+    /**
+     * @return string
+     */
     protected function renderInput()
     {
         return $this->render($this->template);
@@ -62,6 +60,9 @@ class FileUpload extends InputWidget
         assets\FileUploadAsset::register($this->getView());
     }
 
+    /**
+     * @param array $data
+     */
     public function setClientEvents(array $data)
     {
         foreach ($data as $event => $handler) {
@@ -81,24 +82,13 @@ class FileUpload extends InputWidget
 
     protected function registerClientScript()
     {
-        $options = Json::encode($this->clientOptions);
+        $options = $this->clientOptions;
+        $options['url'] = Url::to($this->url);
+        $options = Json::encode($options);
 
         $this->js .= "jQuery('#{id}').fileupload({$options});\n";
         $this->js = str_replace('{id}', $this->options['id'], $this->js);
 
         $this->getView()->registerJs($this->js);
-    }
-
-    public function hasModel()
-    {
-        $result = parent::hasModel();
-
-        if ($result === false && $this->model instanceof Model) {
-            preg_match('~\w+\[(\w+)\](.+)~i', $this->name, $matches);
-            $this->attribute = $matches[1] . $matches[2];
-            $result = true;
-        }
-
-        return $result;
     }
 }

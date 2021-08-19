@@ -25,10 +25,11 @@
     ],
     "require": {
         "yiisoft/yii2": "2.0.*",
-        "bower-asset/blueimp-file-upload": "9.*"
+        "bower-asset/blueimp-file-upload": "9.*",
+        "creocoder/yii2-flysystem": "~1.0"
     },
     "require-dev": {
-        "roave/security-advisories": "dev-master"
+        "roave/security-advisories": "dev-latest"
     },
     "autoload": {
         "psr-4": {
@@ -37,7 +38,7 @@
     },
     "extra": {
         "branch-alias": {
-            "dev-master": "0.1.x-dev"
+            "dev-master": "1.0.x-dev"
         }
     }
 }

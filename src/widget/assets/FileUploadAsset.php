@@ -1,12 +1,12 @@
 <?php
 
-namespace lav45\fileUpload\widgets\assets;
+namespace lav45\fileUpload\widget\assets;
 
 use yii\web\AssetBundle;
 
 /**
  * Class FileUploadAsset
- * @package lav45\fileUpload\widgets\assets
+ * @package lav45\fileUpload\widget\assets
  */
 class FileUploadAsset extends AssetBundle
 {
