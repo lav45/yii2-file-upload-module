@@ -59,6 +59,8 @@ class StorageController extends Controller
     }
 
     /**
+     * Show files in a folder
+     *
      * @param string $directory
      * @throws \yii\base\InvalidConfigException
      */
@@ -81,6 +83,8 @@ class StorageController extends Controller
     }
 
     /**
+     * Move a file
+     *
      * @param string $source
      * @param string $destination
      * @throws \yii\base\InvalidConfigException
@@ -91,6 +95,8 @@ class StorageController extends Controller
     }
 
     /**
+     * Copy the file
+     *
      * @param string $source
      * @param string $destination
      * @throws \yii\base\InvalidConfigException
@@ -101,6 +107,8 @@ class StorageController extends Controller
     }
 
     /**
+     * Copy local file to the storage
+     *
      * @param string $source
      * @param string $destination
      * @throws \yii\base\InvalidConfigException
@@ -138,6 +146,8 @@ class StorageController extends Controller
     }
 
     /**
+     * Delete a file
+     *
      * @param string $path
      * @throws \yii\base\InvalidConfigException
      */
@@ -163,7 +173,7 @@ class StorageController extends Controller
     }
 
     /**
-     * Remove all files old then {count} days
+     * Remove all files
      *
      * @param string $path
      * @throws \yii\base\InvalidConfigException
