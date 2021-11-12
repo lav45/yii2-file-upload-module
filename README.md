@@ -32,13 +32,13 @@ You need to configure your web server to the `@storageDir` directory and specify
 ```php
 return [
     'aliases' => [
-        '@storageDir' => '@common/storage',
-        '@storageUrl' => 'https://site.com/storage',
+        '@storageDir' => '/storage',
+        '@storageUrl' => 'https://cdn.site.com/storage',
     ],
     'components' => [
         'fs' => [
             'class' => creocoder\flysystem\LocalFilesystem::className(),
-            'path' => '@storageDir',
+            'path' => '@common/cdn',
         ]
     ],
 ];

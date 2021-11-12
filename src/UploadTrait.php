@@ -37,7 +37,7 @@ trait UploadTrait
      */
     public function getUploadDir()
     {
-        return $this->getUploadPath();
+        return Yii::getAlias('@storageDir') . $this->getUploadPath();
     }
 
     /**
