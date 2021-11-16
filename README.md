@@ -32,7 +32,6 @@ You need to configure your web server to the `@storageDir` directory and specify
 ```php
 return [
     'aliases' => [
-        '@storageDir' => '/storage',
         '@storageUrl' => 'https://cdn.site.com/storage',
     ],
     'components' => [
