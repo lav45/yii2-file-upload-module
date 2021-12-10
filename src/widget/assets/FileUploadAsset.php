@@ -11,27 +11,10 @@ use yii\web\AssetBundle;
 class FileUploadAsset extends AssetBundle
 {
     /**
-     * @var string
-     */
-    public $sourcePath = '@bower/blueimp-file-upload';
-    /**
-     * @var array
-     */
-    public $css = [
-        'css/jquery.fileupload.css'
-    ];
-    /**
-     * @var array
-     */
-    public $js = [
-        'js/vendor/jquery.ui.widget.js',
-        'js/jquery.iframe-transport.js',
-        'js/jquery.fileupload.js'
-    ];
-    /**
      * @var array
      */
     public $depends = [
-        'yii\web\JqueryAsset',
+        'lav45\fileUpload\widget\assets\BlueimpUploadJSAsset',
+        'lav45\fileUpload\widget\assets\BlueimpUploadCSSAsset',
     ];
 }
