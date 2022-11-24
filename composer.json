@@ -25,7 +25,7 @@
     ],
     "require": {
         "yiisoft/yii2": "2.0.*",
-        "bower-asset/blueimp-file-upload": "9.*",
+        "bower-asset/blueimp-file-upload": "10.*",
         "creocoder/yii2-flysystem": "~1.0"
     },
     "require-dev": {

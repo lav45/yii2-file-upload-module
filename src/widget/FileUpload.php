@@ -4,6 +4,7 @@ namespace lav45\fileUpload\widget;
 
 use yii\helpers\Json;
 use yii\helpers\Url;
+use yii\web\JsExpression;
 use yii\widgets\InputWidget;
 
 /**
@@ -82,7 +83,12 @@ class FileUpload extends InputWidget
 
     protected function registerClientScript()
     {
+        $this->view->registerJs("$(document).on('drop dragover', (e) => e.preventDefault())");
+
         $options = $this->clientOptions;
+        if (!isset($options['dropZone'])) {
+            $options['dropZone'] = new JsExpression(sprintf('$("#%s").parent()', $this->options['id']));
+        }
         $options['url'] = Url::to($this->url);
         $options = Json::encode($options);
 
