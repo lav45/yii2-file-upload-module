@@ -8,7 +8,7 @@
         "widget",
         "upload"
     ],
-    "homepage": "https://github.com/LAV45/yii2-file-upload-module",
+    "homepage": "https://github.com/lav45/yii2-file-upload-module",
     "type": "yii2-extension",
     "license": "BSD-3-Clause",
     "authors": [
