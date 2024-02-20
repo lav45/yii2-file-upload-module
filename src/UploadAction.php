@@ -57,6 +57,10 @@ class UploadAction extends Action
     /**
      * @var array|\Closure
      */
+    public $beforeStorage;
+    /**
+     * @var array|\Closure
+     */
     public $afterRun;
     /**
      * @var array|\Closure
@@ -105,13 +109,19 @@ class UploadAction extends Action
             $file_url = Yii::getAlias($this->url) . '/' . $file_name;
             $result = [
                 'original_name' => $file->name,
+                'extension' => $file->extension,
                 'name' => $file_name,
                 'type' => $file->type,
                 'size' => $file->size,
                 'url' => $file_url,
             ];
 
-            if ($this->moveFile($file->tempName, $file_name) === false) {
+            $tempName = $file->tempName;
+            if ($this->beforeStorage) {
+                $tempName = call_user_func($this->beforeStorage, $tempName, $result);
+            }
+
+            if ($this->moveFile($tempName, $file_name) === false) {
                 $result = ['error' => 'Failed to load file'];
             }
         }
