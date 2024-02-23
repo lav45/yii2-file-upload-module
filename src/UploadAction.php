@@ -118,7 +118,10 @@ class UploadAction extends Action
 
             $tempName = $file->tempName;
             if ($this->beforeStorage) {
-                $tempName = call_user_func($this->beforeStorage, $tempName, $result);
+                [$tempName, $error] = call_user_func($this->beforeStorage, $tempName, $result);
+                if ($error) {
+                    return ['error' => $error];
+                }
             }
 
             if ($this->moveFile($tempName, $file_name) === false) {
