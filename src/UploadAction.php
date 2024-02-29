@@ -152,7 +152,12 @@ class UploadAction extends Action
             return false;
         }
         $file_path = Yii::getAlias($this->path) . '/' . $file_name;
-        return $this->getFs()->writeStream($file_path, $stream);
+
+        $result = $this->getFs()->writeStream($file_path, $stream);
+
+        unlink($source);
+
+        return $result;
     }
 
     /**
