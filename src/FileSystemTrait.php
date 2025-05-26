@@ -2,7 +2,7 @@
 
 namespace lav45\fileUpload;
 
-use creocoder\flysystem\Filesystem;
+use diecoding\flysystem\AbstractComponent as Filesystem;
 use yii\base\InvalidConfigException;
 use yii\di\Instance;
 

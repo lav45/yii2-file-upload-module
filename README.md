@@ -36,8 +36,9 @@ return [
     ],
     'components' => [
         'fs' => [
-            'class' => creocoder\flysystem\LocalFilesystem::className(),
+            'class' => diecoding\flysystem\LocalComponent::className(),
             'path' => '@common/cdn',
+            'secret' => 'secret'
         ]
     ],
 ];

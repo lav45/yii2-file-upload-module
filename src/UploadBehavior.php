@@ -150,7 +150,7 @@ class UploadBehavior extends Behavior
         }
 
         if ($this->moveFile === true) {
-            $fs->rename($tempFile, $uploadFile);
+            $fs->move($tempFile, $uploadFile);
         } else {
             $fs->copy($tempFile, $uploadFile);
         }
