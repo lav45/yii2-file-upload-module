@@ -1,6 +1,5 @@
 {
-    "name": "yesayi98/yii2-file-upload-module",
-    "version": "dev-master",
+    "name": "lav45/yii2-file-upload-module",
     "description": "This is Yii2 extension for the upload files",
     "keywords": [
         "yii2",
