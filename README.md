@@ -18,7 +18,7 @@ Either run
 or add
 
 ```
-"lav45/yii2-file-upload-module": "1.0.*"
+"lav45/yii2-file-upload-module": "^1.1"
 ```
 
 to the require section of your `composer.json` file.
