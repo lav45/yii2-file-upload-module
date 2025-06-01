@@ -11,24 +11,18 @@ The preferred way to install this extension is through [composer](http://getcomp
 
 Either run
 
-```
-~$ composer require --prefer-dist lav45/yii2-file-upload-module
-```
-
-or add
-
-```
-"lav45/yii2-file-upload-module": "^1.1"
+```shell
+~$ composer require  lav45/yii2-file-upload-module
 ```
 
 to the require section of your `composer.json` file.
-
 
 Basic Usage:
 ------
 
 Add path aliases and url to your file store in the main config
 You need to configure your web server to the `@storageDir` directory and specify `@storageUrl`
+
 ```php
 return [
     'aliases' => [
@@ -45,6 +39,7 @@ return [
 ```
 
 Add action to the main controller
+
 ```php
 use lav45\fileUpload\UploadAction;
 
@@ -62,6 +57,7 @@ class PageController extends Controller
 ```
 
 Need to add to your ActiveRecord model
+
 ```php
 use lav45\fileUpload\UploadTrait;
 use lav45\fileUpload\UploadBehavior;
@@ -96,6 +92,7 @@ class Page extends ActiveRecord implements UploadInterface
 ```
 
 Need to add a field for uploading files
+
 ```php
 /**
  * @var Page $model
@@ -111,12 +108,9 @@ ActiveForm::end();
 ```
 
 Displays the uploaded file
+
 ```php
-<?php
-/**
- * @var Page $model
- */
- ?>
+<?php /** @var Page $model */ ?>
  
 <img src="<?= $model->getAttributeUrl('image') ?>" alt="">
 ```
