@@ -13,13 +13,12 @@ class BlueimpUploadJSAsset extends AssetBundle
     /**
      * @var string
      */
-    public $sourcePath = '@bower/blueimp-file-upload/js';
+    public $sourcePath = __DIR__ . '/blueimp-file-upload/js';
     /**
      * @var array
      */
     public $js = [
         'vendor/jquery.ui.widget.js',
-        'jquery.iframe-transport.js',
         'jquery.fileupload.js'
     ];
     /**
@@ -27,6 +26,5 @@ class BlueimpUploadJSAsset extends AssetBundle
      */
     public $depends = [
         'yii\web\JqueryAsset',
-
     ];
 }

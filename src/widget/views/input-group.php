@@ -18,13 +18,13 @@ function(e, data) {
     if (data.result.error) {
         alert(data.result.error);
     } else {
-        var el = jQuery('#{$targetId}'),
-            fileName = data.result.name,
-            fileUrl = data.result.url;
-         
+        const el = jQuery('#{$targetId}');
+        const fileName = data.result.name;
+        const fileUrl = data.result.url;
+
         el.val(fileName);
-        
-        var link = jQuery('<a>')
+
+        const link = jQuery('<a>')
             .text(fileName)
             .attr({
                 href: fileUrl,

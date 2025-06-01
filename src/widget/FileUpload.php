@@ -58,7 +58,7 @@ class FileUpload extends InputWidget
 
     protected function registerAssets()
     {
-        assets\FileUploadAsset::register($this->getView());
+        assets\BlueimpUploadJSAsset::register($this->getView());
     }
 
     /**

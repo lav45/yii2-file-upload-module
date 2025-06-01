@@ -1,27 +1,20 @@
 # phpstorm project files
 .idea
 
-# netbeans project files
-nbproject
-
-# zend studio for eclipse project files
-.buildpath
-.project
-.settings
-
 # composer vendor dir
-vendor
+/vendor
 
 # composer itself is not needed
-composer.phar
+/composer.phar
+/composer
 
 # Mac DS_Store Files
 .DS_Store
 
 # phpunit itself is not needed
-phpunit.phar
+/phpunit.phar
 # local phpunit config
-phpunit.xml
+/phpunit.xml
 
 /composer.lock
 /.composer

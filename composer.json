@@ -25,7 +25,6 @@
     ],
     "require": {
         "yiisoft/yii2": "2.0.*",
-        "bower-asset/blueimp-file-upload": "10.*",
         "diecoding/yii2-flysystem": "^1.7"
     },
     "require-dev": {
