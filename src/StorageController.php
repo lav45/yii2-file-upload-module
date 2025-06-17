@@ -2,9 +2,10 @@
 
 namespace lav45\fileUpload;
 
-use League\Flysystem\Plugin\ListFiles;
+use League\Flysystem\StorageAttributes;
 use Yii;
 use yii\console\Controller;
+use yii\helpers\BaseConsole;
 use yii\helpers\Console;
 
 /**
@@ -69,15 +70,16 @@ class StorageController extends Controller
         $items = $this->getFs()->listContents($directory, $this->recursive);
         $formatter = Yii::$app->getFormatter();
         foreach ($items as $item) {
-            if (isset($item['timestamp'])) {
-                echo $formatter->asDatetime($item['timestamp']);
+            /** @var StorageAttributes $item */
+            if ($item->lastModified() !== null) {
+                echo $formatter->asDatetime($item->lastModified());
                 echo "\t";
             }
 
-            echo $item['type'] === 'dir' ? 'D' : 'F';
+            echo $item->isDir() ? 'D' : 'F';
             echo ' ';
 
-            echo $this->recursive ? $item['path'] : $item['basename'];
+            echo $this->recursive ? $item->path() : basename($item->path());
             echo "\n";
         }
     }
@@ -91,7 +93,7 @@ class StorageController extends Controller
      */
     public function actionMv($source, $destination)
     {
-        $this->getFs()->rename($source, $destination);
+        $this->getFs()->move($source, $destination);
     }
 
     /**
@@ -127,7 +129,7 @@ class StorageController extends Controller
             }
 
             $stream = fopen($source, 'rb+');
-            $fs->putStream($destination, $stream);
+            $fs->writeStream($destination, $stream);
             return;
         }
 
@@ -142,7 +144,7 @@ class StorageController extends Controller
             return;
         }
 
-        $this->stdout("{$source} file not exist\n", Console::FG_RED);
+        $this->stdout("{$source} file not exist\n", BaseConsole::FG_RED);
     }
 
     /**
@@ -156,7 +158,7 @@ class StorageController extends Controller
         $fs = $this->getFs();
 
         if ($this->isDir($path)) {
-            $fs->deleteDir($path);
+            $fs->deleteDirectory($path);
         } else {
             $fs->delete($path);
         }
@@ -166,10 +168,9 @@ class StorageController extends Controller
      * @param string $path
      * @throws \yii\base\InvalidConfigException
      */
-    protected function isDir($path)
+    protected function isDir($path): bool
     {
-        $meta_data = $this->getFs()->getMetadata($path);
-        return $meta_data === false || $meta_data['type'] === 'dir';
+        return $this->getFs()->directoryExists($path);
     }
 
     /**
@@ -187,26 +188,27 @@ class StorageController extends Controller
                 $this->older_than === 0
             )
         ) {
-            $this->stdout('WARNING', Console::FG_RED);
+            $this->stdout('WARNING', BaseConsole::FG_RED);
             $this->stdout(" If you want to delete all files, use the parameter -f (--force)\n");
             return;
         }
 
         $fs = $this->getFs();
-        $fs->addPlugin(new ListFiles());
-        $list = $fs->listFiles($path, $this->recursive);
+        $list = $fs->listContents($path, $this->recursive);
 
         foreach ($list as $item) {
-            if ((
-                    $this->older_than === 0 &&
-                    $this->force === true
-                ) || (
-                    isset($item['timestamp']) &&
-                    $this->older_than > 0 &&
-                    strtotime("+{$this->older_than} day", $item['timestamp']) < time()
+            if ($item instanceof \League\Flysystem\FileAttributes && (
+                    (
+                        $this->older_than === 0 &&
+                        $this->force === true
+                    ) || (
+                        $item->lastModified() !== null &&
+                        $this->older_than > 0 &&
+                        strtotime("+{$this->older_than} day", $item->lastModified()) < time()
+                    )
                 )
             ) {
-                $fs->delete($item['path']);
+                $fs->delete($item->path());
             }
         }
     }

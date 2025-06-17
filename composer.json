@@ -25,7 +25,8 @@
     ],
     "require": {
         "yiisoft/yii2": "2.0.*",
-        "diecoding/yii2-flysystem": "^1.7"
+        "diecoding/yii2-flysystem": "^1.7",
+        "league/flysystem": "^3.0"
     },
     "require-dev": {
         "roave/security-advisories": "dev-latest"
@@ -38,6 +39,11 @@
     "extra": {
         "branch-alias": {
             "dev-master": "1.1.x-dev"
+        }
+    },
+    "config": {
+        "allow-plugins": {
+            "yiisoft/yii2-composer": true
         }
     }
 }
