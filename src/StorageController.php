@@ -2,10 +2,10 @@
 
 namespace lav45\fileUpload;
 
+use League\Flysystem\FileAttributes;
 use League\Flysystem\StorageAttributes;
 use Yii;
 use yii\console\Controller;
-use yii\helpers\BaseConsole;
 use yii\helpers\Console;
 
 /**
@@ -144,7 +144,7 @@ class StorageController extends Controller
             return;
         }
 
-        $this->stdout("{$source} file not exist\n", BaseConsole::FG_RED);
+        $this->stdout("{$source} file not exist\n", Console::FG_RED);
     }
 
     /**
@@ -188,7 +188,7 @@ class StorageController extends Controller
                 $this->older_than === 0
             )
         ) {
-            $this->stdout('WARNING', BaseConsole::FG_RED);
+            $this->stdout('WARNING', Console::FG_RED);
             $this->stdout(" If you want to delete all files, use the parameter -f (--force)\n");
             return;
         }
@@ -197,7 +197,7 @@ class StorageController extends Controller
         $list = $fs->listContents($path, $this->recursive);
 
         foreach ($list as $item) {
-            if ($item instanceof \League\Flysystem\FileAttributes && (
+            if ($item instanceof FileAttributes && (
                     (
                         $this->older_than === 0 &&
                         $this->force === true
