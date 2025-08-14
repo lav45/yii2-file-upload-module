@@ -57,6 +57,10 @@ class UploadAction extends Action
     /**
      * @var array|\Closure
      */
+    public $beforeValidate;
+    /**
+     * @var array|\Closure
+     */
     public $beforeStorage;
     /**
      * @var array|\Closure
@@ -96,6 +100,13 @@ class UploadAction extends Action
 
         if ($file === null) {
             throw new BadRequestHttpException('Incorrect upload file');
+        }
+
+        if ($this->beforeValidate) {
+            $error = call_user_func($this->beforeValidate, $file);
+            if ($error) {
+                return ['error' => $error];
+            }
         }
 
         $model = new DynamicModel(['file' => $file]);
