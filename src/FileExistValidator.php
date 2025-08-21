@@ -55,6 +55,9 @@ class FileExistValidator extends Validator
                 continue;
             }
             $file_name = $file[$column];
+            if (!is_string($file_name)) {
+                continue;
+            }
             if ($this->fileExist($file_name)) {
                 continue;
             }
@@ -73,6 +76,9 @@ class FileExistValidator extends Validator
     protected function validateSimpleAttribute($model, $file_name, $attribute)
     {
         if (empty($file_name)) {
+            return;
+        }
+        if (!is_string($file_name)) {
             return;
         }
         if ($this->fileExist($file_name)) {
