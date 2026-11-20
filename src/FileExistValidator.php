@@ -3,12 +3,14 @@
 namespace lav45\fileUpload;
 
 use Closure;
+use yii\base\Model;
 use yii\helpers\ArrayHelper;
 use yii\validators\Validator;
 
 /**
  * Class FileExistValidator
  * @package lav45\fileUpload
+ * @property-write callable|null $accessCheck Callback: (string $file, Model $model, string $attribute): bool.
  */
 class FileExistValidator extends Validator
 {
@@ -22,6 +24,13 @@ class FileExistValidator extends Validator
     public $enableClientValidation = false;
     /** @var string */
     public $message = "File '{value}' must be loaded.";
+
+    private Closure|null $accessCheck = null;
+
+    public function setAccessCheck(callable|null $accessCheck): void
+    {
+        $this->accessCheck = $accessCheck === null ? null : Closure::fromCallable($accessCheck);
+    }
 
     /**
      * @param \yii\base\Model $model
@@ -58,10 +67,11 @@ class FileExistValidator extends Validator
             if (!is_string($file_name)) {
                 continue;
             }
-            if ($this->fileExist($file_name)) {
+            $fileAttribute = "{$attribute}[{$index}][{$column}]";
+            if ($this->canAccessFile($file_name, $model, $fileAttribute) && $this->fileExist($file_name)) {
                 continue;
             }
-            $this->addError($model, "{$attribute}[{$index}][{$column}]", $this->message, [
+            $this->addError($model, $fileAttribute, $this->message, [
                 'value' => $file_name,
             ]);
         }
@@ -81,7 +91,7 @@ class FileExistValidator extends Validator
         if (!is_string($file_name)) {
             return;
         }
-        if ($this->fileExist($file_name)) {
+        if ($this->canAccessFile($file_name, $model, $attribute) && $this->fileExist($file_name)) {
             return;
         }
         $this->addError($model, $attribute, $this->message, [
@@ -105,5 +115,10 @@ class FileExistValidator extends Validator
             }
         }
         return false;
+    }
+
+    private function canAccessFile(string $file, Model $model, string $attribute): bool
+    {
+        return $this->accessCheck === null || ($this->accessCheck)($file, $model, $attribute) === true;
     }
 }
