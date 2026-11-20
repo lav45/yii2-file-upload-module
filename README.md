@@ -114,3 +114,38 @@ Displays the uploaded file
  
 <img src="<?= $model->getAttributeUrl('image') ?>" alt="">
 ```
+
+
+Checking file access
+--------------------
+
+`FileExistValidator` supports an optional `accessCheck` callback in addition to
+checking whether a file exists in one of the configured folders:
+
+```php
+use lav45\fileUpload\FileExistValidator;
+use yii\base\Model;
+
+return [
+    [['files'], FileExistValidator::class,
+        'column' => 'name',
+        'folders' => ['@storageDir/page', '@storageTempDir'],
+        'accessCheck' => static function (string $fileName, Model $model, string $attribute): bool {
+            return Yii::$app->user->can('useFile', ['fileName' => $fileName]);
+        },
+    ],
+];
+```
+
+The permission in this example must be supplied by the application. The callback
+accepts any PHP callable and receives the filename, the validated model and the
+attribute name. For array values it is called separately for each file; the
+attribute identifies the item, for example `files[0][name]`.
+
+Only a return value of `true` grants access. The callback runs before the
+filesystem lookup; denial produces the validator's normal error message.
+Permission does not replace the existence check. Omitting `accessCheck` or
+setting it to `null` preserves the existing behavior.
+
+This callback protects model validation when accepting a file reference.
+Applications must enforce download authorization separately.
